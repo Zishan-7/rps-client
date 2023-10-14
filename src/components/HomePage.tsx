@@ -2,7 +2,12 @@ import React, { useEffect, useState } from "react";
 import Button from "./Button";
 import Player1View from "./Player1View";
 import Player2View from "./Player2View";
-import { solveGame } from "@/services/contractServices";
+import {
+  getCurrentWalletAddress,
+  getPlayersAddress,
+  player1Timeout,
+  solveGame,
+} from "@/services/contractServices";
 import Loading from "./Loading";
 
 const HomePage = () => {
@@ -10,6 +15,8 @@ const HomePage = () => {
   const [winner, setWinner] = useState<number>();
   const [accounts, setaccounts] = useState([]);
   const [isLoading, setisLoading] = useState(false);
+
+  const player1Address = getPlayersAddress().player1Address;
 
   useEffect(() => {
     getAccountsAddress();
@@ -25,6 +32,10 @@ const HomePage = () => {
   };
 
   const handleSolveGame = async () => {
+    if (player1Address !== getCurrentWalletAddress()) {
+      alert("Please switch to Player 1 account to solve the game");
+      return;
+    }
     try {
       setisLoading(true);
       const res = await solveGame();
@@ -33,6 +44,21 @@ const HomePage = () => {
       alert("Some error occured");
     } finally {
       setisLoading(false);
+    }
+  };
+
+  const handlePlayer1Timeout = async () => {
+    try {
+      if (player1Address === getCurrentWalletAddress()) {
+        alert("Please switch to player 2 account");
+        return;
+      }
+      setisLoading(true);
+      await player1Timeout();
+      setisLoading(false);
+      setStage(1);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -58,17 +84,23 @@ const HomePage = () => {
           </h2>
         )}
 
-        <span className="mt-6 w-full flex justify-center items-center">
+        <span className="mt-6 w-full flex-col flex justify-center items-center">
           <Button
             isSelected
             className="w-56"
             text="Check Result"
             onClick={handleSolveGame}
           />
+          <p className="mt-4">
+            Player 1 not responding?{" "}
+            <span
+              onClick={handlePlayer1Timeout}
+              className="underline cursor-pointer"
+            >
+              Click here
+            </span>
+          </p>
         </span>
-        <p className="mt-4">
-          Please switch to player 1 account before checking result
-        </p>
       </div>
     </div>
   );

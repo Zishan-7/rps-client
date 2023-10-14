@@ -9,6 +9,9 @@ let player1Move = 0,
   player2Move = 0;
 
 let player2Played = false;
+let currentAccountAddress = "";
+let player1Address = "",
+  player2Address = "";
 
 export const startGame = async (_stake: string, move: number) => {
   try {
@@ -56,8 +59,9 @@ export const startGame = async (_stake: string, move: number) => {
       ),
     });
     await contract.waitForDeployment();
-    console.log(contract.target);
     RpsContractAddress = contract.target.toString();
+    player1Address = signer.address;
+    currentAccountAddress = signer.address;
   } catch (error) {
     console.error("Error deploying contract:", error);
     throw error;
@@ -67,7 +71,7 @@ export const startGame = async (_stake: string, move: number) => {
 export const Player2Move = async (move: number) => {
   try {
     if (!RpsContractAddress) {
-      alert("Transaction is processing please wait");
+      alert("Contract not deployed yet");
       return;
     }
     player2Move = move;
@@ -95,6 +99,7 @@ export const Player2Move = async (move: number) => {
     });
     await txn.wait();
     player2Played = true;
+    player2Address = signer.address;
   } catch (e) {
     console.error(e);
   }
@@ -103,7 +108,7 @@ export const Player2Move = async (move: number) => {
 export const solveGame = async () => {
   try {
     if (!RpsContractAddress || !player2Played) {
-      alert("Transaction is processing please wait");
+      alert("Contract not deployed yet");
       return;
     }
     const provider = new BrowserProvider((window as any).ethereum);
@@ -134,4 +139,77 @@ const selectWinner = () => {
     return 2;
   }
   return 0;
+};
+
+// only player 2 can call this
+export const player1Timeout = async () => {
+  try {
+    if (!RpsContractAddress) {
+      alert("Contract not deployed yet");
+      return;
+    }
+    const provider = new BrowserProvider((window as any).ethereum);
+    const signer = await provider.getSigner();
+    const rpsContract = new ethers.Contract(
+      RpsContractAddress.toString(),
+      RPSAbi,
+      signer
+    );
+
+    if (signer.address === player1Address) {
+      throw new Error("Connect to player 2 account");
+    }
+
+    const txnRes = await rpsContract.j1Timeout();
+
+    await txnRes.wait();
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+// only player 1 can call this
+export const player2Timeout = async () => {
+  try {
+    if (!RpsContractAddress) {
+      alert("Contract not deployed yet");
+      return;
+    }
+    const provider = new BrowserProvider((window as any).ethereum);
+    const signer = await provider.getSigner();
+    const rpsContract = new ethers.Contract(
+      RpsContractAddress.toString(),
+      RPSAbi,
+      signer
+    );
+
+    if (currentAccountAddress !== player1Address) {
+      throw new Error("Connect to player 1 account");
+    }
+
+    const txnRes = await rpsContract.j2Timeout();
+
+    await txnRes.wait();
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+export const setCurrentWalletAddress = async () => {
+  const provider = new BrowserProvider((window as any).ethereum);
+  const signer = await provider.getSigner();
+  currentAccountAddress = signer.address;
+};
+
+export const getCurrentWalletAddress = () => {
+  return currentAccountAddress;
+};
+
+export const getPlayersAddress = () => {
+  return {
+    player1Address,
+    player2Address,
+  };
 };
