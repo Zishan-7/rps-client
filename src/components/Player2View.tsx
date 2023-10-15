@@ -4,6 +4,7 @@ import Button from "./Button";
 import {
   Player2Move,
   getCurrentWalletAddress,
+  getLastAction,
   getPlayersAddress,
   player1Timeout,
   player2Timeout,
@@ -47,6 +48,18 @@ const Player2View: React.FC<Player2ViewI> = ({ accounts, setStage }) => {
         alert("Please switch to player 1 account");
         return;
       }
+
+      const lastAction = getLastAction();
+
+      lastAction.setMinutes(getLastAction().getMinutes() + 5);
+
+      if (lastAction > new Date()) {
+        alert(
+          "Timeout funtion can only be called after 5 minutes of inactivity"
+        );
+        return;
+      }
+
       setisLoading(true);
       await player2Timeout();
       setisLoading(false);

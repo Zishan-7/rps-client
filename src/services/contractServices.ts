@@ -13,6 +13,8 @@ let currentAccountAddress = "";
 let player1Address = "",
   player2Address = "";
 
+let lastAction = new Date();
+
 export const startGame = async (_stake: string, move: number) => {
   try {
     stake = _stake;
@@ -62,6 +64,7 @@ export const startGame = async (_stake: string, move: number) => {
     RpsContractAddress = contract.target.toString();
     player1Address = signer.address;
     currentAccountAddress = signer.address;
+    lastAction = new Date();
   } catch (error) {
     console.error("Error deploying contract:", error);
     throw error;
@@ -100,6 +103,7 @@ export const Player2Move = async (move: number) => {
     await txn.wait();
     player2Played = true;
     player2Address = signer.address;
+    lastAction = new Date();
   } catch (e) {
     console.error(e);
   }
@@ -125,6 +129,7 @@ export const solveGame = async () => {
     );
 
     await txnRes.wait();
+    lastAction = new Date();
     return selectWinner();
   } catch (e) {
     console.error(e);
@@ -212,4 +217,8 @@ export const getPlayersAddress = () => {
     player1Address,
     player2Address,
   };
+};
+
+export const getLastAction = () => {
+  return lastAction;
 };

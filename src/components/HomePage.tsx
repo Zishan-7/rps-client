@@ -4,6 +4,7 @@ import Player1View from "./Player1View";
 import Player2View from "./Player2View";
 import {
   getCurrentWalletAddress,
+  getLastAction,
   getPlayersAddress,
   player1Timeout,
   solveGame,
@@ -51,6 +52,17 @@ const HomePage = () => {
     try {
       if (player1Address === getCurrentWalletAddress()) {
         alert("Please switch to player 2 account");
+        return;
+      }
+
+      const lastAction = getLastAction();
+
+      lastAction.setMinutes(getLastAction().getMinutes() + 5);
+
+      if (lastAction > new Date()) {
+        alert(
+          "Timeout funtion can only be called after 5 minutes of inactivity"
+        );
         return;
       }
       setisLoading(true);
