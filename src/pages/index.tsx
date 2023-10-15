@@ -1,7 +1,7 @@
 import Button from "@/components/Button";
 import HomePage from "@/components/HomePage";
 import { setCurrentWalletAddress } from "@/services/contractServices";
-import { BrowserProvider } from "ethers";
+import detectEthereumProvider from "@metamask/detect-provider";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 import { useEffect, useState } from "react";
@@ -11,6 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function Home() {
   const [walletConnected, setwalletConnected] = useState(false);
   const [walletsConnected, setwalletsConnected] = useState([]);
+  const [isMetamaskAvailable, setisMetamaskAvailable] = useState(false);
 
   const connectToMetaMask = async () => {
     // @ts-ignore
@@ -44,6 +45,7 @@ export default function Home() {
   };
 
   const checkConnectedWallets = async () => {
+    const provider = await detectEthereumProvider();
     const accounts = await (window as any).ethereum.request({
       method: "eth_accounts",
     });
@@ -55,13 +57,41 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    checkConnectedWallets();
-    (window as any).ethereum.on("accountsChanged", () => {
+  const initialiseMetaMask = async () => {
+    const provider = await detectEthereumProvider();
+    if (provider) {
+      setisMetamaskAvailable(true);
       checkConnectedWallets();
-      setCurrentWalletAddress();
-    });
+      provider.on("accountsChanged", () => {
+        checkConnectedWallets();
+        setCurrentWalletAddress();
+      });
+    } else {
+      setisMetamaskAvailable(false);
+    }
+  };
+
+  useEffect(() => {
+    initialiseMetaMask();
   }, []);
+
+  if (!isMetamaskAvailable) {
+    return (
+      <main className={`${inter.className} bg-white h-screen w-screen p-6`}>
+        <Head>
+          <title>RPS Game</title>
+        </Head>
+        <div className="h-screen w-screen flex flex-col justify-center items-center">
+          <Button
+            isSelected
+            disabled
+            text="Metamask not available"
+            onClick={() => console.log("Metamask not available")}
+          />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className={`${inter.className} bg-white h-screen w-screen p-6`}>
@@ -80,8 +110,7 @@ export default function Home() {
             />
             <p className="mt-4 text-black">
               {walletsConnected.length === 0
-                ? "Connect two accounts to start playing the game" +
-                  walletsConnected.length
+                ? "Connect two accounts to start playing the game"
                 : "Connect one more account"}
             </p>
           </div>

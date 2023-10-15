@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@metamask/detect-provider": "^2.0.0",
     "@metamask/sdk-react": "^0.8.0",
     "axios": "^1.5.1",
     "ethers": "^6.8.0",
